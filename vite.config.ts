@@ -1,11 +1,9 @@
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
-import mkcert from 'vite-plugin-mkcert';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/reactjs-template/',
   css: {
     preprocessorOptions: {
       scss: {
@@ -20,10 +18,6 @@ export default defineConfig({
     // Allows using the compilerOptions.paths property in tsconfig.json.
     // https://www.npmjs.com/package/vite-tsconfig-paths
     tsconfigPaths(),
-    // Creates a custom SSL certificate valid for the local machine.
-    // Using this plugin requires admin rights on the first dev-mode launch.
-    // https://www.npmjs.com/package/vite-plugin-mkcert
-    process.env.HTTPS && mkcert(),
   ],
   build: {
     target: 'esnext',
@@ -32,6 +26,9 @@ export default defineConfig({
   publicDir: './public',
   server: {
     // Exposes your dev server and makes it accessible for the devices in the same network.
-    host: true,
+    // host: true,
+	allowedHosts: [
+		"783c-2a02-2378-124b-55f7-1087-9aba-fd0e-135c.ngrok-free.app",
+	]
   },
 });
