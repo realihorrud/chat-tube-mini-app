@@ -73,7 +73,7 @@ export const WelcomeScreen: FC = () => {
           <button
             key={ex.url}
             className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] border border-white/20 bg-transparent text-tg-text text-[13px] cursor-pointer text-left transition-colors hover:bg-white/[0.08]"
-            onClick={() => void handleSubmit(ex.url)}
+            onClick={() => setUrl(ex.url)}
             disabled={isLoading}
           >
             <span className="text-base shrink-0">▶</span>

@@ -38,7 +38,7 @@ export const Sidebar: FC = () => {
           <h2 className="text-base font-semibold text-tg-text m-0">Chats</h2>
           <button
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/25 bg-transparent text-tg-text text-[13px] cursor-pointer hover:bg-white/10 transition-colors"
-            onClick={clearActiveChat}
+            onClick={() => { clearActiveChat(); setSidebarOpen(false); }}
           >
             <span className="text-base">+</span>
             New

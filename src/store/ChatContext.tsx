@@ -61,35 +61,17 @@ export const ChatProvider: FC<PropsWithChildren> = ({ children }) => {
       timestamp: Date.now(),
     };
 
-    const assistantMsgId = `msg_${Date.now()}_a`;
-    const assistantMsg: Message = {
-      id: assistantMsgId,
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      isStreaming: true,
-    };
-
     updateChat(activeChatId, (c) => ({
       ...c,
-      messages: [...c.messages, userMsg, assistantMsg],
+      messages: [...c.messages, userMsg],
     }));
 
     const chatId = activeChatId;
-    await api.sendMessage(chatId, content, (chunk) => {
-      updateChat(chatId, (c) => ({
-        ...c,
-        messages: c.messages.map((m) =>
-          m.id === assistantMsgId ? { ...m, content: m.content + chunk } : m,
-        ),
-      }));
-    });
+    const assistantMsg = await api.sendMessage(chatId, content);
 
     updateChat(chatId, (c) => ({
       ...c,
-      messages: c.messages.map((m) =>
-        m.id === assistantMsgId ? { ...m, isStreaming: false } : m,
-      ),
+      messages: [...c.messages, assistantMsg],
     }));
   }, [activeChatId, updateChat]);
 

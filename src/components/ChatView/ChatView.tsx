@@ -55,6 +55,7 @@ export const ChatView: FC = () => {
   const { activeChat, sendMessage } = useChat();
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   if (!activeChat) return null;
@@ -68,8 +69,11 @@ export const ChatView: FC = () => {
     const msg = input.trim();
     setInput('');
     setIsSending(true);
+    setError(null);
     try {
       await sendMessage(msg);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsSending(false);
       textareaRef.current?.focus();
@@ -111,6 +115,9 @@ export const ChatView: FC = () => {
       </div>
 
       {/* Input */}
+      {error && (
+        <div className="px-4 py-2 text-xs text-[#ff4444] text-center">{error}</div>
+      )}
       <form
         className="flex items-end gap-2 px-4 pt-3 pb-[calc(2.5rem+env(safe-area-inset-bottom,24px))] focus-within:pb-3 transition-[padding] duration-200 border-t border-white/15 bg-tg-bg"
         onSubmit={(e) => void handleSubmit(e)}

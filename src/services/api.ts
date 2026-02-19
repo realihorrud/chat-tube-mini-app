@@ -95,26 +95,29 @@ export async function processVideo(chatId: string): Promise<Message> {
   };
 }
 
-const STUB_RESPONSES = [
-  'This video covers several interesting topics. The main theme revolves around creative content and storytelling techniques used by the creator.',
-  'Based on my analysis, the key points discussed in this video are:\n\n1. Introduction to the topic\n2. Deep dive into the main concept\n3. Practical examples and demonstrations\n4. Summary and takeaways',
-  'The video is approximately 10 minutes long and features the creator discussing their perspective on this subject. They provide several examples and reference other works in the field.',
-  'That\'s a great question! The creator mentions this around the 3-minute mark. They explain that the approach works because it combines simplicity with effectiveness.',
-  'The video doesn\'t directly address that point, but based on the context provided, I can infer that the creator would likely agree with that interpretation.',
-];
+
+interface SendMessageResponse {
+  id: string;
+  role: 'assistant';
+  content: string;
+  created_at: number;
+}
 
 export async function sendMessage(
-  _chatId: string,
-  _content: string,
-  onChunk: (chunk: string) => void,
-): Promise<void> {
-  const response = STUB_RESPONSES[Math.floor(Math.random() * STUB_RESPONSES.length)];
-  const words = response.split(' ');
+  chatId: string,
+  content: string,
+): Promise<Message> {
+  const data = await apiFetch<SendMessageResponse>(`/chats/${chatId}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
 
-  for (const word of words) {
-    await new Promise((r) => setTimeout(r, 40 + Math.random() * 60));
-    onChunk(word + ' ');
-  }
+  return {
+    id: String(data.id),
+    role: 'assistant',
+    content: data.content,
+    timestamp: data.created_at ?? Date.now(),
+  };
 }
 
 export const STUB_CHATS: Chat[] = [
