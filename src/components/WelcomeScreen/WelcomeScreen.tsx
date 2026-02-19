@@ -2,24 +2,28 @@ import { type FC, useState, type FormEvent } from 'react';
 import { useChat } from '@/store/ChatContext';
 
 const EXAMPLES = [
-  { label: 'Rick Astley - Never Gonna Give You Up', url: 'https://youtube.com/watch?v=dQw4w9WgXcQ' },
-  { label: 'Me at the zoo (First YouTube Video)', url: 'https://youtube.com/watch?v=jNQXAC9IVRw' },
-  { label: 'Luis Fonsi - Despacito', url: 'https://youtube.com/watch?v=kJQP7kiw5Fk' },
+  { label: 'Heavy Is The Crown (Live) - Linkin Park', url: 'https://www.youtube.com/watch?v=9L_ZdETLgzQ' },
+  { label: 'Pavel Durov: Telegram, Freedom, Censorship, Money, Power & Human Nature | Lex Fridman Podcast', url: 'https://www.youtube.com/watch?v=qjPH9njnaVU' },
+  { label: 'Mike Tyson - All Knockouts of the Legend', url: 'https://www.youtube.com/watch?v=kknVfOJZ1w0' },
 ];
 
 export const WelcomeScreen: FC = () => {
   const { createChat } = useChat();
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (videoUrl: string) => {
     if (!videoUrl.trim() || isLoading) return;
     setIsLoading(true);
+    setError(null);
     try {
       await createChat(videoUrl.trim());
+      setUrl('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
-      setUrl('');
     }
   };
 
@@ -41,7 +45,7 @@ export const WelcomeScreen: FC = () => {
         <input
           className="flex-1 px-4 py-3.5 rounded-xl border border-white/30 bg-tg-secondary-bg text-tg-text text-[15px] outline-none transition-colors placeholder:text-tg-hint focus:border-tg-button"
           type="text"
-          placeholder="Paste YouTube URL or video ID..."
+          placeholder="Paste YouTube URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={isLoading}
@@ -55,8 +59,12 @@ export const WelcomeScreen: FC = () => {
         </button>
       </form>
 
+      {error && (
+        <p className="mt-2 text-xs text-[#ff4444] max-w-[480px]">{error}</p>
+      )}
+
       <p className="mt-4 text-xs text-tg-hint">
-        Supports youtube.com links, youtu.be short links, and video IDs
+        Supports youtube.com links, youtu.be short links
       </p>
 
       <div className="mt-8 flex flex-col gap-2 w-full max-w-[480px]">

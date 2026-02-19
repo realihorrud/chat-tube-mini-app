@@ -93,23 +93,6 @@ export const ChatView: FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/15 bg-tg-bg">
-        <span className="text-lg shrink-0">▶</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-[15px] font-semibold text-tg-text truncate">
-            {activeChat.videoTitle}
-          </div>
-          <div className="text-xs text-tg-hint mt-px">
-            {activeChat.isProcessing
-              ? 'Processing video...'
-              : activeChat.isReady
-                ? 'Ready — ask anything!'
-                : 'Waiting...'}
-          </div>
-        </div>
-      </div>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         {activeChat.messages.map((msg) => (

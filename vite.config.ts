@@ -23,10 +23,16 @@ export default defineConfig({
   },
   publicDir: './public',
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+      },
+    },
     // Exposes your dev server and makes it accessible for the devices in the same network.
     // host: true,
 	allowedHosts: [
-		"783c-2a02-2378-124b-55f7-1087-9aba-fd0e-135c.ngrok-free.app",
+		"6e1f-2a02-2378-10aa-4ea4-b10a-e310-a0e5-4edb.ngrok-free.app",
 	]
   },
 });

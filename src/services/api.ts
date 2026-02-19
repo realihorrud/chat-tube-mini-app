@@ -1,51 +1,85 @@
 import type { Chat, Message } from '@/types/chat';
+import { retrieveRawInitData } from '@tma.js/sdk';
 
-const FAKE_DELAY = 1200;
+const API_BASE = '/api';
 
-let chatIdCounter = 0;
-let messageIdCounter = 0;
-
-function generateId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${++chatIdCounter}`;
+function getInitData(): string {
+  try {
+    return retrieveRawInitData() ?? '';
+  } catch {
+    return '';
+  }
 }
 
-function generateMessageId(): string {
-  return `msg_${Date.now()}_${++messageIdCounter}`;
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-function extractVideoTitle(url: string): string {
-  const titles: Record<string, string> = {
-    'dQw4w9WgXcQ': 'Rick Astley - Never Gonna Give You Up',
-    'jNQXAC9IVRw': 'Me at the zoo',
-    'kJQP7kiw5Fk': 'Luis Fonsi - Despacito ft. Daddy Yankee',
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const initData = getInitData();
+  const method = options.method ?? 'GET';
+  const isBodyMethod = method === 'POST' || method === 'PUT' || method === 'PATCH';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    ...(options.headers as Record<string, string>),
   };
 
-  const match = url.match(/(?:v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
-  const videoId = match?.[1] ?? url.trim();
-  return titles[videoId] ?? `YouTube Video (${videoId.slice(0, 11)})`;
+  let body: string | undefined;
+  if (isBodyMethod) {
+    const parsed = options.body ? JSON.parse(options.body as string) as Record<string, unknown> : {};
+    body = JSON.stringify({ ...parsed, initData });
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    body,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let message: string;
+    try {
+      const json = JSON.parse(text) as { message?: string; error?: string };
+      message = json.message ?? json.error ?? text;
+    } catch {
+      message = text;
+    }
+    throw new ApiError(res.status, message);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+interface CreateChatResponse {
+  id: string;
+  youtube_url: string;
+  title: string;
+  messages: Message[];
+  is_processing: boolean;
+  is_ready: boolean;
+  created_at: number;
 }
 
 export async function submitVideo(url: string): Promise<Chat> {
-  await new Promise((r) => setTimeout(r, FAKE_DELAY));
-
-  const id = generateId('chat');
-  const title = extractVideoTitle(url);
+  const data = await apiFetch<CreateChatResponse>('/chats', {
+    method: 'POST',
+    body: JSON.stringify({ youtube_url: url }),
+  });
 
   return {
-    id,
-    videoUrl: url,
-    videoTitle: title,
-    messages: [
-      {
-        id: generateMessageId(),
-        role: 'system',
-        content: `Processing video: "${title}"...`,
-        timestamp: Date.now(),
-      },
-    ],
-    isProcessing: true,
-    isReady: false,
-    createdAt: Date.now(),
+    id: String(data.id),
+    videoUrl: data.youtube_url,
+    videoTitle: data.title,
+    messages: data.messages ?? [],
+    isProcessing: data.is_processing ?? true,
+    isReady: data.is_ready ?? false,
+    createdAt: data.created_at ?? Date.now(),
   };
 }
 
@@ -54,7 +88,7 @@ export async function processVideo(chatId: string): Promise<Message> {
   await new Promise((r) => setTimeout(r, 2500));
 
   return {
-    id: generateMessageId(),
+    id: `msg_${Date.now()}`,
     role: 'assistant',
     content: 'Your video has been processed successfully! Ask me anything about it.',
     timestamp: Date.now(),
