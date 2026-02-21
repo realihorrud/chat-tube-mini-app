@@ -1,38 +1,51 @@
-import type { Chat, Message } from '@/types/chat';
-import { retrieveRawInitData } from '@tma.js/sdk';
+import type {
+  Conversation,
+  ConversationSummary,
+  Message,
+} from "@/types/conversation.ts";
+import { retrieveRawInitData } from "@tma.js/sdk";
 
-const API_BASE = '/api';
+const API_BASE = "/api";
 
 function getInitData(): string {
   try {
-    return retrieveRawInitData() ?? '';
+    return retrieveRawInitData() ?? "";
   } catch {
-    return '';
+    return "";
   }
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const initData = getInitData();
-  const method = options.method ?? 'GET';
-  const isBodyMethod = method === 'POST' || method === 'PUT' || method === 'PATCH';
+  const method = options.method ?? "GET";
+  const isBodyMethod =
+    method === "POST" || method === "PUT" || method === "PATCH";
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': `tma ${initData}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `tma ${initData}`,
     ...(options.headers as Record<string, string>),
   };
 
   let body: string | undefined;
   if (isBodyMethod) {
-    const parsed = options.body ? JSON.parse(options.body as string) as Record<string, unknown> : {};
+    const parsed = options.body
+      ? (JSON.parse(options.body as string) as Record<string, unknown>)
+      : {};
     body = JSON.stringify({ ...parsed });
   }
 
@@ -57,59 +70,78 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   return res.json() as Promise<T>;
 }
 
-interface CreateChatResponse {
-  id: string;
-  youtube_url: string;
-  title: string;
-  messages: Message[];
-  is_processing: boolean;
-  is_ready: boolean;
-  created_at: number;
+interface FetchConversationResponse {
+  data: { id: number; title: string }[];
 }
 
-export async function submitVideo(url: string): Promise<Chat> {
-  const data = await apiFetch<CreateChatResponse>('/chats', {
-    method: 'POST',
-    body: JSON.stringify({ youtube_url: url }),
-  });
+export async function fetchChats(): Promise<ConversationSummary[]> {
+  const res = await apiFetch<FetchConversationResponse>("/chats");
+  return res.data.map((c) => ({
+    id: String(c.id),
+    title: c.title,
+  }));
+}
 
+interface ConversationDetailResponse {
+  id: number;
+  title: string;
+  status: string;
+  created_at: string;
+  youtubeVideo: {
+    url: string;
+    title: string;
+  };
+  messages: {
+    id: number;
+    role: "user" | "assistant" | "system";
+    content: string;
+    created_at: string;
+  }[];
+}
+
+export async function fetchChat(chatId: string): Promise<Conversation> {
+  const data = await apiFetch<ConversationDetailResponse>(`/chats/${chatId}`);
   return {
     id: String(data.id),
-    videoUrl: data.youtube_url,
-    videoTitle: data.title,
-    messages: data.messages ?? [],
-    isProcessing: data.is_processing ?? true,
-    isReady: data.is_ready ?? false,
-    createdAt: data.created_at ?? Date.now(),
+    videoUrl: data.youtubeVideo.url,
+    videoTitle: data.youtubeVideo.title,
+    messages: data.messages.map((m) => ({
+      id: String(m.id),
+      role: m.role,
+      content: m.content,
+      timestamp: new Date(m.created_at).getTime(),
+    })),
+    isProcessing: data.status === "processing",
+    isReady: data.status === "ready",
+    createdAt: new Date(data.created_at).getTime(),
   };
 }
 
-export async function processVideo(chatId: string): Promise<Message> {
-  void chatId;
-  await new Promise((r) => setTimeout(r, 2500));
-
-  return {
-    id: `msg_${Date.now()}`,
-    role: 'assistant',
-    content: 'Your video has been processed successfully! Ask me anything about it.',
-    timestamp: Date.now(),
-  };
+export async function deleteChat(chatId: string): Promise<void> {
+  const initData = getInitData();
+  const res = await fetch(`${API_BASE}/chats/${chatId}`, {
+    method: "DELETE",
+    headers: { Authorization: `tma ${initData}` },
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, await res.text());
+  }
 }
 
 export async function sendMessageStream(
   chatId: string,
   content: string,
-  onChunk: (chunk: string) => void,
+  onChunk: (accumulated: string) => void,
   signal?: AbortSignal,
 ): Promise<Message> {
   const initData = getInitData();
 
   const res = await fetch(`${API_BASE}/chats/${chatId}/messages`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
-      'Authorization': `tma ${initData}`,
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      Authorization: `tma ${initData}`,
     },
     body: JSON.stringify({ content }),
     signal,
@@ -129,97 +161,80 @@ export async function sendMessageStream(
 
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
-  let fullContent = '';
-  let messageId = '';
-  let createdAt = Date.now();
+  let accumulated = "";
+  let buffer = "";
 
-  let buffer = '';
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
+    const lines = buffer.split("\n");
     buffer = lines.pop()!;
 
     for (const line of lines) {
-      if (!line.startsWith('data: ') && !line.startsWith('data:')) continue;
-      const data = line.slice(line.indexOf(':') + 1).trimStart();
-      if (data === '[DONE]') continue;
+      if (!line.startsWith("data: ") && !line.startsWith("data:")) continue;
+      const raw = line.slice(line.indexOf(":") + 1).trimStart();
 
+      let parsed: {
+        type?: string;
+        content?: string;
+        full_response?: string;
+        message?: string;
+      };
       try {
-        const parsed = JSON.parse(data) as {
-          id?: string;
-          delta?: string;
-          content?: string;
-          created_at?: number;
-        };
-        if (parsed.id) messageId = String(parsed.id);
-        if (parsed.created_at) createdAt = parsed.created_at;
-        const delta = parsed.delta ?? parsed.content ?? '';
-        if (delta) {
-          fullContent += delta;
-          onChunk(fullContent);
-        }
+        parsed = JSON.parse(raw) as typeof parsed;
       } catch {
-        // Not JSON — treat as raw text delta
-        fullContent += data;
-        onChunk(fullContent);
+        continue;
+      }
+
+      if (parsed.type === "content" && parsed.content) {
+        accumulated += parsed.content;
+        onChunk(accumulated);
+      } else if (parsed.type === "done") {
+        if (parsed.full_response) {
+          accumulated = parsed.full_response;
+          onChunk(accumulated);
+        }
+      } else if (parsed.type === "error") {
+        throw new ApiError(500, parsed.message ?? "Stream error");
       }
     }
   }
 
   return {
-    id: messageId || `msg_${Date.now()}`,
-    role: 'assistant',
-    content: fullContent,
-    timestamp: createdAt,
+    id: `msg_${Date.now()}`,
+    role: "assistant",
+    content: accumulated,
+    timestamp: Date.now(),
   };
 }
 
-export const STUB_CHATS: Chat[] = [
-  {
-    id: 'stub_1',
-    videoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-    videoTitle: 'Rick Astley - Never Gonna Give You Up',
-    messages: [
-      {
-        id: 'stub_msg_1',
-        role: 'assistant',
-        content: 'Your video has been processed successfully! Ask me anything about it.',
-        timestamp: Date.now() - 3600000,
-      },
-      {
-        id: 'stub_msg_2',
-        role: 'user',
-        content: 'What is this video about?',
-        timestamp: Date.now() - 3500000,
-      },
-      {
-        id: 'stub_msg_3',
-        role: 'assistant',
-        content: 'This is the iconic music video for "Never Gonna Give You Up" by Rick Astley, released in 1987. It became one of the most famous internet memes known as "Rickrolling".',
-        timestamp: Date.now() - 3400000,
-      },
-    ],
-    isProcessing: false,
-    isReady: true,
-    createdAt: Date.now() - 3600000,
-  },
-  {
-    id: 'stub_2',
-    videoUrl: 'https://youtube.com/watch?v=jNQXAC9IVRw',
-    videoTitle: 'Me at the zoo',
-    messages: [
-      {
-        id: 'stub_msg_4',
-        role: 'assistant',
-        content: 'Your video has been processed successfully! Ask me anything about it.',
-        timestamp: Date.now() - 7200000,
-      },
-    ],
-    isProcessing: false,
-    isReady: true,
-    createdAt: Date.now() - 7200000,
-  },
-];
+export async function submitVideo(url: string): Promise<Conversation> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 240_000);
+
+  try {
+    const data = await apiFetch<ConversationDetailResponse>("/chats", {
+      method: "POST",
+      body: JSON.stringify({ youtube_url: url }),
+      signal: controller.signal,
+    });
+    return {
+      id: String(data.id),
+      videoUrl: data.youtubeVideo?.url ?? url,
+      videoTitle: data.title,
+      messages: (data.messages ?? []).map((m) => ({
+        id: String(m.id),
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.created_at).getTime(),
+      })),
+      isProcessing: data.status === "processing",
+      isReady: data.status === "ready",
+      createdAt: new Date(data.created_at).getTime(),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}

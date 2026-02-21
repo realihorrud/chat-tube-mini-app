@@ -1,45 +1,44 @@
 import {
-  type FC,
   useState,
   useRef,
   useEffect,
   type FormEvent,
   type KeyboardEvent,
-} from 'react';
-import { useChat } from '@/store/ChatContext';
-import type { Message } from '@/types/chat';
+} from "react";
+import { useChat } from "@/store/ConversationContext.tsx";
+import type { Message } from "@/types/conversation.ts";
 
-const MessageBubble: FC<{ message: Message }> = ({ message }) => {
+function MessageBubble({ message }: { message: Message }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    ref.current?.scrollIntoView({ behavior: 'smooth' });
+    ref.current?.scrollIntoView({ behavior: "smooth" });
   }, [message.content]);
 
-  const isUser = message.role === 'user';
-  const isSystem = message.role === 'system';
+  const isUser = message.role === "user";
+  const isSystem = message.role === "system";
 
   return (
     <div
       ref={ref}
       className={`flex gap-2.5 max-w-[85%] animate-[message-in_0.2s_ease-out] ${
-        isUser ? 'self-end flex-row-reverse' : 'self-start'
+        isUser ? "self-end flex-row-reverse" : "self-start"
       }`}
     >
       <div
         className={`w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 ${
-          isUser ? 'bg-tg-button' : 'bg-white/20'
+          isUser ? "bg-tg-button" : "bg-white/20"
         }`}
       >
-        {isUser ? '👤' : message.role === 'assistant' ? '🤖' : 'ℹ️'}
+        {isUser ? "👤" : message.role === "assistant" ? "🤖" : "ℹ️"}
       </div>
       <div
         className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
           isUser
-            ? 'bg-tg-button text-tg-button-text rounded-br-sm'
+            ? "bg-tg-button text-tg-button-text rounded-br-sm"
             : isSystem
-              ? 'bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5'
-              : 'bg-tg-secondary-bg text-tg-text rounded-bl-sm'
+              ? "bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5"
+              : "bg-tg-secondary-bg text-tg-text rounded-bl-sm"
         }`}
       >
         {message.content}
@@ -49,11 +48,11 @@ const MessageBubble: FC<{ message: Message }> = ({ message }) => {
       </div>
     </div>
   );
-};
+}
 
-export const ChatView: FC = () => {
+export function ConversationView() {
   const { activeChat, sendMessage } = useChat();
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -61,13 +60,14 @@ export const ChatView: FC = () => {
   if (!activeChat) return null;
 
   const isStreaming = activeChat.messages.some((m) => m.isStreaming);
-  const canSend = input.trim() && !isSending && !isStreaming && activeChat.isReady;
+  const canSend =
+    input.trim() && !isSending && !isStreaming && activeChat.isReady;
 
   const handleSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!canSend) return;
     const msg = input.trim();
-    setInput('');
+    setInput("");
     setIsSending(true);
     setError(null);
     try {
@@ -81,7 +81,7 @@ export const ChatView: FC = () => {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void handleSubmit();
     }
@@ -90,7 +90,7 @@ export const ChatView: FC = () => {
   const handleInput = (value: string) => {
     setInput(value);
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   };
@@ -116,7 +116,9 @@ export const ChatView: FC = () => {
 
       {/* Input */}
       {error && (
-        <div className="px-4 py-2 text-xs text-[#ff4444] text-center">{error}</div>
+        <div className="px-4 py-2 text-xs text-[#ff4444] text-center">
+          {error}
+        </div>
       )}
       <form
         className="flex items-end gap-2 px-4 pt-3 pb-[calc(2.5rem+env(safe-area-inset-bottom,24px))] focus-within:pb-3 transition-[padding] duration-200 border-t border-white/15 bg-tg-bg"
@@ -125,7 +127,11 @@ export const ChatView: FC = () => {
         <textarea
           ref={textareaRef}
           className="flex-1 px-4 py-2.5 rounded-[20px] border border-white/30 bg-tg-secondary-bg text-tg-text text-sm outline-none resize-none max-h-[120px] min-h-[20px] leading-5 font-[inherit] transition-colors placeholder:text-tg-hint focus:border-tg-button"
-          placeholder={activeChat.isReady ? 'Ask about this video...' : 'Waiting for video processing...'}
+          placeholder={
+            activeChat.isReady
+              ? "Ask about this video..."
+              : "Waiting for video processing..."
+          }
           value={input}
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -142,4 +148,4 @@ export const ChatView: FC = () => {
       </form>
     </div>
   );
-};
+}

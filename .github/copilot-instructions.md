@@ -20,7 +20,7 @@ This is a **Telegram Mini App (TMA)** built with React, TypeScript, and Vite. It
 Use `@/` to reference files inside `src/`:
 
 ```ts
-import { Page } from '@/components/Page';
+import { Page } from "@/components/Page";
 ```
 
 Configured in `tsconfig.json` (`paths`) and resolved by `vite-tsconfig-paths`.
@@ -69,15 +69,15 @@ Configured in `tsconfig.json` (`paths`) and resolved by `vite-tsconfig-paths`.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run dev:https` | Start dev server with HTTPS |
-| `npm run build` | Type-check and build for production |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Run ESLint with auto-fix |
-| `npm run preview` | Preview production build |
-| `npm run deploy` | Deploy to GitHub Pages |
+| Command             | Description                         |
+| ------------------- | ----------------------------------- |
+| `npm run dev`       | Start dev server                    |
+| `npm run dev:https` | Start dev server with HTTPS         |
+| `npm run build`     | Type-check and build for production |
+| `npm run lint`      | Run ESLint                          |
+| `npm run lint:fix`  | Run ESLint with auto-fix            |
+| `npm run preview`   | Preview production build            |
+| `npm run deploy`    | Deploy to GitHub Pages              |
 
 ## Important Notes
 

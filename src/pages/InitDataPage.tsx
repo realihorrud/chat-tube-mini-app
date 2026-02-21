@@ -1,19 +1,18 @@
-import { type FC, useMemo } from 'react';
-import {
-  initData,
-  type User,
-  useSignal,
-} from '@tma.js/sdk-react';
-import { List, Placeholder } from '@telegram-apps/telegram-ui';
+import { useMemo } from "react";
+import { initData, type User, useSignal } from "@tma.js/sdk-react";
+import { List, Placeholder } from "@telegram-apps/telegram-ui";
 
-import { DisplayData, type DisplayDataRow } from '@/components/DisplayData/DisplayData.tsx';
-import { Page } from '@/components/Page.tsx';
+import {
+  DisplayData,
+  type DisplayDataRow,
+} from "@/components/DisplayData/DisplayData.tsx";
+import { Page } from "@/components/Page.tsx";
 
 function getUserRows(user: User): DisplayDataRow[] {
   return Object.entries(user).map(([title, value]) => ({ title, value }));
 }
 
-export const InitDataPage: FC = () => {
+export function InitDataPage() {
   const initDataRaw = useSignal(initData.raw);
   const initDataState = useSignal(initData.state);
 
@@ -22,15 +21,18 @@ export const InitDataPage: FC = () => {
       return;
     }
     return [
-      { title: 'raw', value: initDataRaw },
-      ...Object.entries(initDataState).reduce<DisplayDataRow[]>((acc, [title, value]) => {
-        if (value instanceof Date) {
-          acc.push({ title, value: value.toISOString() });
-        } else if (!value || typeof value !== 'object') {
-          acc.push({ title, value });
-        }
-        return acc;
-      }, []),
+      { title: "raw", value: initDataRaw },
+      ...Object.entries(initDataState).reduce<DisplayDataRow[]>(
+        (acc, [title, value]) => {
+          if (value instanceof Date) {
+            acc.push({ title, value: value.toISOString() });
+          } else if (!value || typeof value !== "object") {
+            acc.push({ title, value });
+          }
+          return acc;
+        },
+        [],
+      ),
     ];
   }, [initDataState, initDataRaw]);
 
@@ -49,7 +51,10 @@ export const InitDataPage: FC = () => {
   const chatRows = useMemo<DisplayDataRow[] | undefined>(() => {
     return !initDataState?.chat
       ? undefined
-      : Object.entries(initDataState.chat).map(([title, value]) => ({ title, value }));
+      : Object.entries(initDataState.chat).map(([title, value]) => ({
+          title,
+          value,
+        }));
   }, [initDataState]);
 
   if (!initDataRows) {
@@ -62,7 +67,7 @@ export const InitDataPage: FC = () => {
           <img
             alt="Telegram sticker"
             src="https://xelene.me/telegram.gif"
-            style={{ display: 'block', width: '144px', height: '144px' }}
+            style={{ display: "block", width: "144px", height: "144px" }}
           />
         </Placeholder>
       </Page>
@@ -71,11 +76,13 @@ export const InitDataPage: FC = () => {
   return (
     <Page>
       <List>
-        <DisplayData header={'Init Data'} rows={initDataRows}/>
-        {userRows && <DisplayData header={'User'} rows={userRows}/>}
-        {receiverRows && <DisplayData header={'Receiver'} rows={receiverRows}/>}
-        {chatRows && <DisplayData header={'Chat'} rows={chatRows}/>}
+        <DisplayData header={"Init Data"} rows={initDataRows} />
+        {userRows && <DisplayData header={"User"} rows={userRows} />}
+        {receiverRows && (
+          <DisplayData header={"Receiver"} rows={receiverRows} />
+        )}
+        {chatRows && <DisplayData header={"Chat"} rows={chatRows} />}
       </List>
     </Page>
   );
-};
+}

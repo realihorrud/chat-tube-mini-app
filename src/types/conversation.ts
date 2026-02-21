@@ -1,12 +1,12 @@
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: "user" | "assistant" | "system";
   content: string;
   timestamp: number;
   isStreaming?: boolean;
 }
 
-export interface Chat {
+export interface Conversation {
   id: string;
   videoUrl: string;
   videoTitle: string;
@@ -14,4 +14,9 @@ export interface Chat {
   isProcessing: boolean;
   isReady: boolean;
   createdAt: number;
+}
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
 }

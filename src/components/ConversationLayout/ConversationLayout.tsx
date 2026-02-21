@@ -1,10 +1,8 @@
-import type { FC } from 'react';
-import { useChat } from '@/store/ChatContext';
-import { Sidebar } from '@/components/Sidebar/Sidebar';
-import { ChatView } from '@/components/ChatView/ChatView';
-import { WelcomeScreen } from '@/components/WelcomeScreen/WelcomeScreen';
+import type { PropsWithChildren } from "react";
+import { useChat } from "@/store/ConversationContext.tsx";
+import { Sidebar } from "@/components/Sidebar/Sidebar";
 
-export const ChatLayout: FC = () => {
+export function ConversationLayout({ children }: PropsWithChildren) {
   const { activeChat, toggleSidebar } = useChat();
 
   return (
@@ -19,13 +17,11 @@ export const ChatLayout: FC = () => {
             ☰
           </button>
           <div className="flex-1 text-base font-semibold text-tg-text truncate">
-            {activeChat ? activeChat.videoTitle : 'ChatTube'}
+            {activeChat ? activeChat.videoTitle : "ChatTube"}
           </div>
         </div>
-        <div className="flex-1 overflow-hidden">
-          {activeChat ? <ChatView /> : <WelcomeScreen />}
-        </div>
+        <div className="flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
   );
-};
+}

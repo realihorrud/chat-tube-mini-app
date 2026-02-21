@@ -1,9 +1,12 @@
-import { useLaunchParams, useSignal, miniApp } from '@tma.js/sdk-react';
-import { AppRoot } from '@telegram-apps/telegram-ui';
+import { useLaunchParams, useSignal, miniApp } from "@tma.js/sdk-react";
+import { AppRoot } from "@telegram-apps/telegram-ui";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import { ChatProvider } from '@/store/ChatContext';
-import { ChatLayout } from '@/components/ChatLayout/ChatLayout';
-import {swipeBehavior} from "@tma.js/sdk-react";
+import { ChatProvider } from "@/store/ConversationContext.tsx";
+import { ConversationLayout } from "@/components/ConversationLayout/ConversationLayout.tsx";
+import { CoversationPage } from "@/pages/ConversationPage/CoversationPage.tsx";
+import { WelcomeScreen } from "@/components/WelcomeScreen/WelcomeScreen";
+import { swipeBehavior } from "@tma.js/sdk-react";
 
 export function App() {
   const lp = useLaunchParams();
@@ -17,12 +20,20 @@ export function App() {
 
   return (
     <AppRoot
-      appearance={isDark ? 'dark' : 'light'}
-      platform={['macos', 'ios'].includes(lp.tgWebAppPlatform) ? 'ios' : 'base'}
+      appearance={isDark ? "dark" : "light"}
+      platform={["macos", "ios"].includes(lp.tgWebAppPlatform) ? "ios" : "base"}
     >
-      <ChatProvider>
-        <ChatLayout />
-      </ChatProvider>
+      <HashRouter>
+        <ChatProvider>
+          <ConversationLayout>
+            <Routes>
+              <Route path="/" element={<WelcomeScreen />} />
+              <Route path="/chat/:id" element={<CoversationPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ConversationLayout>
+        </ChatProvider>
+      </HashRouter>
     </AppRoot>
   );
 }

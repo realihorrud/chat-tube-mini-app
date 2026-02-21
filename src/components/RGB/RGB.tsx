@@ -1,20 +1,20 @@
-import type { RGB as RGBType } from '@tma.js/sdk-react';
-import type { FC } from 'react';
+import type { RGB as RGBType } from "@tma.js/sdk-react";
+import { bem } from "@/css/bem.ts";
+import { classNames } from "@/css/classnames.ts";
 
-import { bem } from '@/css/bem.ts';
-import { classNames } from '@/css/classnames.ts';
+import "./RGB.css";
 
-import './RGB.css';
+const [b, e] = bem("rgb");
 
-const [b, e] = bem('rgb');
-
-export type RGBProps = JSX.IntrinsicElements['div'] & {
+export type RGBProps = JSX.IntrinsicElements["div"] & {
   color: RGBType;
 };
 
-export const RGB: FC<RGBProps> = ({ color, className, ...rest }) => (
-  <span {...rest} className={classNames(b(), className)}>
-    <i className={e('icon')} style={{ backgroundColor: color }}/>
-    {color}
-  </span>
-);
+export function RGB({ color, className, ...rest }: RGBProps) {
+  return (
+    <span {...rest} className={classNames(b(), className)}>
+      <i className={e("icon")} style={{ backgroundColor: color }} />
+      {color}
+    </span>
+  );
+}
