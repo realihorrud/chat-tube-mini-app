@@ -4,7 +4,7 @@ import { useChat } from "@/store/ConversationContext.tsx";
 import { ConversationView } from "@/components/ConversationView/ConversationView.tsx";
 import * as api from "@/services/api";
 
-export function CoversationPage() {
+export function ConversationPage() {
   const { id } = useParams<{ id: string }>();
   const { activeChat, setActiveChat } = useChat();
   const [loading, setLoading] = useState(false);

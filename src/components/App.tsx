@@ -4,7 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { ChatProvider } from "@/store/ConversationContext.tsx";
 import { ConversationLayout } from "@/components/ConversationLayout/ConversationLayout.tsx";
-import { CoversationPage } from "@/pages/ConversationPage/CoversationPage.tsx";
+import { ConversationPage } from "@/pages/ConversationPage/ConversationPage.tsx";
 import { WelcomeScreen } from "@/components/WelcomeScreen/WelcomeScreen";
 import { swipeBehavior } from "@tma.js/sdk-react";
 
@@ -28,7 +28,7 @@ export function App() {
           <ConversationLayout>
             <Routes>
               <Route path="/" element={<WelcomeScreen />} />
-              <Route path="/chat/:id" element={<CoversationPage />} />
+              <Route path="/c/:id" element={<ConversationPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </ConversationLayout>

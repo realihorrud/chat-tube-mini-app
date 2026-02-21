@@ -12,8 +12,17 @@ const EXAMPLES = [
     url: "https://www.youtube.com/watch?v=qjPH9njnaVU",
   },
   {
-    label: "Mike Tyson - All Knockouts of the Legend",
-    url: "https://www.youtube.com/watch?v=kknVfOJZ1w0",
+    label: "Jason Fried: Build for Yourself, Keep Costs Low and Stay Small",
+    url: "https://youtu.be/BdDCtMA1gSw?si=klPHrDIdGoqEJlqm",
+  },
+  {
+    label: "30 Celebrities Fight For $1,000,000!",
+    url: "https://www.youtube.com/watch?v=QJI0an6irrA",
+  },
+  {
+    label:
+      "After watching this, your brain will not be the same | Lara Boyd | TEDxVancouver",
+    url: "https://youtu.be/LNHBMFCzznE?si=jKEP5T9bqczwpFnc",
   },
 ];
 
@@ -81,20 +90,23 @@ export function WelcomeScreen() {
         <div className="text-xs text-tg-hint uppercase tracking-wider mb-1">
           Try an example
         </div>
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex.url}
-            className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] border border-white/20 bg-transparent text-tg-text text-[13px] cursor-pointer text-left transition-colors hover:bg-white/[0.08]"
-            onClick={() => {
-              setUrl(ex.url);
-              void handleSubmit(ex.url);
-            }}
-            disabled={isLoading}
-          >
-            <span className="text-base shrink-0">▶</span>
-            {ex.label}
-          </button>
-        ))}
+        {EXAMPLES.map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value)
+          .map((ex) => (
+            <button
+              key={ex.url}
+              className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] border border-white/20 bg-transparent text-tg-text text-[13px] cursor-pointer text-left transition-colors hover:bg-white/[0.08]"
+              onClick={() => {
+                setUrl(ex.url);
+                void handleSubmit(ex.url);
+              }}
+              disabled={isLoading}
+            >
+              <span className="text-base shrink-0">▶</span>
+              {ex.label}
+            </button>
+          ))}
       </div>
     </div>
   );

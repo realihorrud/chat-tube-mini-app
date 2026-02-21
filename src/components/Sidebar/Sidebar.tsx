@@ -41,7 +41,6 @@ function ContextMenu({ chatId, x, y, onClose, onDelete }: ContextMenuProps) {
 
   const actions = [
     { label: "📌  Pin Chat", onClick: () => onClose() },
-    { label: "📦  Archive", onClick: () => onClose() },
     { label: "✏️  Rename", onClick: () => onClose() },
     { label: "🔗  Share", onClick: () => onClose() },
   ];
