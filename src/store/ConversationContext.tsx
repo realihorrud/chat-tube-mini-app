@@ -10,76 +10,76 @@ import { useNavigate } from "react-router-dom";
 import type {
   Conversation,
   ConversationSummary,
-  Message,
+  ConversationMessage,
 } from "@/types/conversation.ts";
 import * as api from "@/services/api";
 
-interface ConversationContextTye {
-  chats: Conversation[];
-  chatSummaries: ConversationSummary[];
-  activeChatId: string | null;
-  activeChat: Conversation | null;
+interface ConversationContextType {
+  conversations: Conversation[];
+  conversationSummaries: ConversationSummary[];
+  activeConversationId: string | null;
+  activeConversation: Conversation | null;
   isSidebarOpen: boolean;
-  createChat: (videoUrl: string) => Promise<void>;
+  createConversation: (videoUrl: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
-  setActiveChat: (chat: Conversation) => void;
-  selectChat: (chatId: string) => void;
-  deleteChat: (chatId: string) => void;
+  setActiveConversation: (conversation: Conversation) => void;
+  selectConversation: (conversationId: string) => void;
+  deleteConversation: (conversationId: string) => void;
   clearActiveChat: () => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
 }
 
-const ConversationContext = createContext<ConversationContextTye | null>(null);
+const ConversationContext = createContext<ConversationContextType | null>(null);
 
 export function ChatProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
-  const [chats, setChats] = useState<Conversation[]>([]);
-  const [chatSummaries, setChatSummaries] = useState<ConversationSummary[]>([]);
-  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationSummaries, setConversationSummaries] = useState<ConversationSummary[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    api.fetchChats().then(setChatSummaries).catch(console.error);
+    api.fetchChats().then(setConversationSummaries).catch(console.error);
   }, []);
 
-  const activeChat = chats.find((c) => c.id === activeChatId) ?? null;
+  const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
 
-  const updateChat = useCallback(
-    (chatId: string, updater: (chat: Conversation) => Conversation) => {
-      setChats((prev) => prev.map((c) => (c.id === chatId ? updater(c) : c)));
+  const updateConversation = useCallback(
+    (conversationId: string, updater: (conversation: Conversation) => Conversation) => {
+      setConversations((prev) => prev.map((c) => (c.id === conversationId ? updater(c) : c)));
     },
     [],
   );
 
-  const createChat = useCallback(
+  const createConversation = useCallback(
     async (videoUrl: string) => {
-      const chat = await api.submitVideo(videoUrl);
-      const readyMsg: Message = {
-        id: `msg_ready_${chat.id}`,
+      const conversation = await api.submitVideo(videoUrl);
+      const readyMsg: ConversationMessage = {
+        id: `msg_ready_${conversation.id}`,
         role: "assistant",
         content:
           "Your video has been processed successfully! Ask me anything about it.",
         timestamp: Date.now(),
       };
-      const chatWithMsg = { ...chat, messages: [...chat.messages, readyMsg] };
-      setChats((prev) => [chatWithMsg, ...prev]);
-      setChatSummaries((prev) => [
-        { id: chat.id, title: chat.videoTitle },
+      const conversationWithMsg = { ...conversation, messages: [...conversation.messages, readyMsg] };
+      setConversations((prev) => [conversationWithMsg, ...prev]);
+      setConversationSummaries((prev) => [
+        { id: conversation.id, title: conversation.videoTitle },
         ...prev,
       ]);
-      setActiveChatId(chat.id);
+      setActiveConversationId(conversation.id);
       setSidebarOpen(false);
-      navigate(`/chat/${chat.id}`);
+      navigate(`/chat/${conversation.id}`);
     },
     [navigate],
   );
 
   const sendMessage = useCallback(
     async (content: string) => {
-      if (!activeChatId) return;
+      if (!activeConversationId) return;
 
-      const userMsg: Message = {
+      const userMsg: ConversationMessage = {
         id: `msg_${Date.now()}`,
         role: "user",
         content,
@@ -87,7 +87,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
       };
 
       const streamingMsgId = `msg_stream_${Date.now()}`;
-      const streamingMsg: Message = {
+      const streamingMsg: ConversationMessage = {
         id: streamingMsgId,
         role: "assistant",
         content: "",
@@ -95,18 +95,18 @@ export function ChatProvider({ children }: PropsWithChildren) {
         isStreaming: true,
       };
 
-      updateChat(activeChatId, (c) => ({
+      updateConversation(activeConversationId, (c) => ({
         ...c,
         messages: [...c.messages, userMsg, streamingMsg],
       }));
 
-      const chatId = activeChatId;
+      const conversationId = activeConversationId;
 
       const finalMsg = await api.sendMessageStream(
-        chatId,
+        conversationId,
         content,
         (accumulated) => {
-          updateChat(chatId, (c) => ({
+          updateConversation(conversationId, (c) => ({
             ...c,
             messages: c.messages.map((m) =>
               m.id === streamingMsgId ? { ...m, content: accumulated } : m,
@@ -115,52 +115,52 @@ export function ChatProvider({ children }: PropsWithChildren) {
         },
       );
 
-      updateChat(chatId, (c) => ({
+      updateConversation(conversationId, (c) => ({
         ...c,
         messages: c.messages.map((m) =>
           m.id === streamingMsgId ? { ...finalMsg, isStreaming: false } : m,
         ),
       }));
     },
-    [activeChatId, updateChat],
+    [activeConversationId, updateConversation],
   );
 
-  const setActiveChat = useCallback((chat: Conversation) => {
-    setChats((prev) => {
-      const exists = prev.some((c) => c.id === chat.id);
+  const setActiveConversation = useCallback((conversation: Conversation) => {
+    setConversations((prev) => {
+      const exists = prev.some((c) => c.id === conversation.id);
       return exists
-        ? prev.map((c) => (c.id === chat.id ? chat : c))
-        : [chat, ...prev];
+        ? prev.map((c) => (c.id === conversation.id ? conversation : c))
+        : [conversation, ...prev];
     });
-    setActiveChatId(chat.id);
+    setActiveConversationId(conversation.id);
   }, []);
 
-  const selectChat = useCallback(
-    (chatId: string) => {
+  const selectConversation = useCallback(
+    (conversationId: string) => {
       setSidebarOpen(false);
-      navigate(`/chat/${chatId}`);
+      navigate(`/chat/${conversationId}`);
     },
     [navigate],
   );
 
-  const deleteChat = useCallback(
-    (chatId: string) => {
-      setChats((prev) => prev.filter((c) => c.id !== chatId));
-      setChatSummaries((prev) => prev.filter((c) => c.id !== chatId));
-      setActiveChatId((prev) => {
-        if (prev === chatId) {
+  const deleteConversation = useCallback(
+    (conversationId: string) => {
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      setConversationSummaries((prev) => prev.filter((c) => c.id !== conversationId));
+      setActiveConversationId((prev) => {
+        if (prev === conversationId) {
           navigate("/");
           return null;
         }
         return prev;
       });
-      api.deleteChat(chatId).catch(console.error);
+      api.deleteChat(conversationId).catch(console.error);
     },
     [navigate],
   );
 
   const clearActiveChat = useCallback(() => {
-    setActiveChatId(null);
+    setActiveConversationId(null);
     navigate("/");
   }, [navigate]);
 
@@ -171,16 +171,16 @@ export function ChatProvider({ children }: PropsWithChildren) {
   return (
     <ConversationContext.Provider
       value={{
-        chats,
-        chatSummaries,
-        activeChatId,
-        activeChat,
+        conversations,
+        conversationSummaries,
+        activeConversationId,
+        activeConversation,
         isSidebarOpen,
-        createChat,
+        createConversation,
         sendMessage,
-        setActiveChat,
-        selectChat,
-        deleteChat,
+        setActiveConversation,
+        selectConversation,
+        deleteConversation,
         clearActiveChat,
         toggleSidebar,
         setSidebarOpen,
@@ -191,7 +191,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
   );
 }
 
-export function useChat(): ConversationContextTye {
+export function useChat(): ConversationContextType {
   const ctx = useContext(ConversationContext);
   if (!ctx) throw new Error("useChat must be used within ChatProvider");
   return ctx;

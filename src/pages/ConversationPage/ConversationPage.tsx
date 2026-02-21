@@ -6,24 +6,24 @@ import * as api from "@/services/api";
 
 export function ConversationPage() {
   const { id } = useParams<{ id: string }>();
-  const { activeChat, setActiveChat } = useChat();
+  const { activeConversation, setActiveConversation } = useChat();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    if (activeChat?.id === id) return;
+    if (activeConversation?.id === id) return;
 
     setLoading(true);
     setError(null);
     api
       .fetchChat(id)
-      .then(setActiveChat)
+      .then(setActiveConversation)
       .catch((err) =>
         setError(err instanceof Error ? err.message : String(err)),
       )
       .finally(() => setLoading(false));
-  }, [id, activeChat?.id, setActiveChat]);
+  }, [id, activeConversation?.id, setActiveConversation]);
 
   if (loading) {
     return (
@@ -41,7 +41,7 @@ export function ConversationPage() {
     );
   }
 
-  if (!activeChat) return null;
+  if (!activeConversation) return null;
 
   return <ConversationView />;
 }

@@ -6,9 +6,9 @@ import {
   type KeyboardEvent,
 } from "react";
 import { useChat } from "@/store/ConversationContext.tsx";
-import type { Message } from "@/types/conversation.ts";
+import type { ConversationMessage } from "@/types/conversation.ts";
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message }: { message: ConversationMessage }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,17 +51,17 @@ function MessageBubble({ message }: { message: Message }) {
 }
 
 export function ConversationView() {
-  const { activeChat, sendMessage } = useChat();
+  const { activeConversation, sendMessage } = useChat();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  if (!activeChat) return null;
+  if (!activeConversation) return null;
 
-  const isStreaming = activeChat.messages.some((m) => m.isStreaming);
+  const isStreaming = activeConversation.messages.some((m) => m.isStreaming);
   const canSend =
-    input.trim() && !isSending && !isStreaming && activeChat.isReady;
+    input.trim() && !isSending && !isStreaming && activeConversation.isReady;
 
   const handleSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
@@ -99,10 +99,10 @@ export function ConversationView() {
     <div className="flex flex-col h-full">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
-        {activeChat.messages.map((msg) => (
+        {activeConversation.messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
-        {activeChat.isProcessing && (
+        {activeConversation.isProcessing && (
           <div className="flex items-center gap-2.5 px-4 py-3 text-tg-hint text-[13px]">
             <div className="flex gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-tg-hint animate-[dot-pulse_1.2s_infinite]" />
@@ -128,14 +128,14 @@ export function ConversationView() {
           ref={textareaRef}
           className="flex-1 px-4 py-2.5 rounded-[20px] border border-white/30 bg-tg-secondary-bg text-tg-text text-sm outline-none resize-none max-h-[120px] min-h-[20px] leading-5 font-[inherit] transition-colors placeholder:text-tg-hint focus:border-tg-button"
           placeholder={
-            activeChat.isReady
+            activeConversation.isReady
               ? "Ask about this video..."
               : "Waiting for video processing..."
           }
           value={input}
           onChange={(e) => handleInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={!activeChat.isReady || isSending}
+          disabled={!activeConversation.isReady || isSending}
           rows={1}
         />
         <button

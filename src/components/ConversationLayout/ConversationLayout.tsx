@@ -3,7 +3,7 @@ import { useChat } from "@/store/ConversationContext.tsx";
 import { Sidebar } from "@/components/Sidebar/Sidebar";
 
 export function ConversationLayout({ children }: PropsWithChildren) {
-  const { activeChat, toggleSidebar } = useChat();
+  const { activeConversation, toggleSidebar } = useChat();
 
   return (
     <div className="flex h-dvh overflow-hidden bg-tg-bg">
@@ -17,7 +17,7 @@ export function ConversationLayout({ children }: PropsWithChildren) {
             ☰
           </button>
           <div className="flex-1 text-base font-semibold text-tg-text truncate">
-            {activeChat ? activeChat.videoTitle : "ChatTube"}
+            {activeConversation ? activeConversation.videoTitle : "ChatTube"}
           </div>
         </div>
         <div className="flex-1 overflow-hidden">{children}</div>

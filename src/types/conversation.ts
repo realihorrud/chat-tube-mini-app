@@ -1,4 +1,4 @@
-export interface Message {
+export interface ConversationMessage {
   id: string;
   role: "user" | "assistant" | "system";
   content: string;
@@ -10,7 +10,7 @@ export interface Conversation {
   id: string;
   videoUrl: string;
   videoTitle: string;
-  messages: Message[];
+  messages: ConversationMessage[];
   isProcessing: boolean;
   isReady: boolean;
   createdAt: number;

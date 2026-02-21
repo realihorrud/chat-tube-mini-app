@@ -1,7 +1,7 @@
 import type {
   Conversation,
   ConversationSummary,
-  Message,
+  ConversationMessage,
 } from "@/types/conversation.ts";
 import { retrieveRawInitData } from "@tma.js/sdk";
 
@@ -71,19 +71,19 @@ async function apiFetch<T>(
 }
 
 interface FetchConversationResponse {
-  data: { id: number; title: string }[];
+  data: { id: string; title: string }[];
 }
 
 export async function fetchChats(): Promise<ConversationSummary[]> {
   const res = await apiFetch<FetchConversationResponse>("/chats");
   return res.data.map((c) => ({
-    id: String(c.id),
+    id: c.id,
     title: c.title,
   }));
 }
 
 interface ConversationDetailResponse {
-  id: number;
+  id: string;
   title: string;
   status: string;
   created_at: string;
@@ -92,7 +92,7 @@ interface ConversationDetailResponse {
     title: string;
   };
   messages: {
-    id: number;
+    id: string;
     role: "user" | "assistant" | "system";
     content: string;
     created_at: string;
@@ -102,11 +102,11 @@ interface ConversationDetailResponse {
 export async function fetchChat(chatId: string): Promise<Conversation> {
   const data = await apiFetch<ConversationDetailResponse>(`/chats/${chatId}`);
   return {
-    id: String(data.id),
+    id: data.id,
     videoUrl: data.youtubeVideo.url,
     videoTitle: data.youtubeVideo.title,
     messages: data.messages.map((m) => ({
-      id: String(m.id),
+      id: m.id,
       role: m.role,
       content: m.content,
       timestamp: new Date(m.created_at).getTime(),
@@ -133,7 +133,7 @@ export async function sendMessageStream(
   content: string,
   onChunk: (accumulated: string) => void,
   signal?: AbortSignal,
-): Promise<Message> {
+): Promise<ConversationMessage> {
   const initData = getInitData();
 
   const res = await fetch(`${API_BASE}/chats/${chatId}/messages`, {
@@ -221,11 +221,11 @@ export async function submitVideo(url: string): Promise<Conversation> {
       signal: controller.signal,
     });
     return {
-      id: String(data.id),
+      id: data.id,
       videoUrl: data.youtubeVideo?.url ?? url,
       videoTitle: data.title,
       messages: (data.messages ?? []).map((m) => ({
-        id: String(m.id),
+        id: m.id,
         role: m.role,
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),

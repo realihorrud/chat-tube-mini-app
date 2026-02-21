@@ -26,8 +26,12 @@ const EXAMPLES = [
   },
 ];
 
+const EXAMPLES_SHUFFLED = EXAMPLES.map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
 export function WelcomeScreen() {
-  const { createChat } = useChat();
+  const { createConversation } = useChat();
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +41,7 @@ export function WelcomeScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      await createChat(videoUrl.trim());
+      await createConversation(videoUrl.trim());
       setUrl("");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -61,13 +65,13 @@ export function WelcomeScreen() {
       </p>
 
       <form className="w-full max-w-[480px] flex gap-2" onSubmit={onFormSubmit}>
-        <input
-          className="flex-1 px-4 py-3.5 rounded-xl border border-white/30 bg-tg-secondary-bg text-tg-text text-[15px] outline-none transition-colors placeholder:text-tg-hint focus:border-tg-button"
-          type="text"
+        <textarea
+          className="flex-1 min-w-0 px-4 py-3.5 rounded-xl border border-white/30 bg-tg-secondary-bg text-tg-text text-[15px] outline-none transition-colors placeholder:text-tg-hint focus:border-tg-button resize-none overflow-x-auto overflow-y-hidden whitespace-nowrap"
           placeholder="Paste YouTube URL"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => setUrl(e.target.value.replace(/\n/g, ''))}
           disabled={isLoading}
+          rows={1}
         />
         <button
           className="px-6 py-3.5 rounded-xl border-none bg-tg-button text-tg-button-text text-[15px] font-semibold cursor-pointer transition-opacity whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed hover:not-disabled:opacity-85"
@@ -90,10 +94,7 @@ export function WelcomeScreen() {
         <div className="text-xs text-tg-hint uppercase tracking-wider mb-1">
           Try an example
         </div>
-        {EXAMPLES.map((value) => ({ value, sort: Math.random() }))
-          .sort((a, b) => a.sort - b.sort)
-          .map(({ value }) => value)
-          .map((ex) => (
+        {EXAMPLES_SHUFFLED.map((ex) => (
             <button
               key={ex.url}
               className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] border border-white/20 bg-transparent text-tg-text text-[13px] cursor-pointer text-left transition-colors hover:bg-white/[0.08]"
