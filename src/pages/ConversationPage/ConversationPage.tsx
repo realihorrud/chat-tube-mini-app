@@ -17,11 +17,12 @@ export function ConversationPage() {
     setLoading(true);
     setError(null);
     api
-      .fetchChat(id)
+      .fetchConversation(id)
       .then(setActiveConversation)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : String(err)),
-      )
+      .catch((err) => {
+        console.error("Failed to load conversation:", err);
+        setError("Something went wrong. Please try again later.");
+      })
       .finally(() => setLoading(false));
   }, [id, activeConversation?.id, setActiveConversation]);
 

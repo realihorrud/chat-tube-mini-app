@@ -71,14 +71,15 @@ async function apiFetch<T>(
 }
 
 interface FetchConversationResponse {
-  data: { id: string; title: string }[];
+  data: { id: string; title: string; is_pinned?: boolean }[];
 }
 
-export async function fetchChats(): Promise<ConversationSummary[]> {
-  const res = await apiFetch<FetchConversationResponse>("/chats");
+export async function fetchConversations(): Promise<ConversationSummary[]> {
+  const res = await apiFetch<FetchConversationResponse>("/conversations");
   return res.data.map((c) => ({
     id: c.id,
     title: c.title,
+    isPinned: c.is_pinned ?? false,
   }));
 }
 
@@ -86,6 +87,7 @@ interface ConversationDetailResponse {
   id: string;
   title: string;
   status: string;
+  is_pinned?: boolean;
   created_at: string;
   youtubeVideo: {
     url: string;
@@ -99,10 +101,10 @@ interface ConversationDetailResponse {
   }[];
 }
 
-export async function fetchChat(chatId: string): Promise<Conversation> {
-  const data = await apiFetch<ConversationDetailResponse>(`/chats/${chatId}`);
+function mapConversationDetail(data: ConversationDetailResponse): Conversation {
   return {
     id: data.id,
+    title: data.title,
     videoUrl: data.youtubeVideo.url,
     videoTitle: data.youtubeVideo.title,
     messages: data.messages.map((m) => ({
@@ -114,12 +116,18 @@ export async function fetchChat(chatId: string): Promise<Conversation> {
     isProcessing: data.status === "processing",
     isReady: data.status === "ready",
     createdAt: new Date(data.created_at).getTime(),
+    isPinned: data.is_pinned ?? false,
   };
 }
 
-export async function deleteChat(chatId: string): Promise<void> {
+export async function fetchConversation(conversationId: string): Promise<Conversation> {
+  const data = await apiFetch<ConversationDetailResponse>(`/conversations/${conversationId}`);
+  return mapConversationDetail(data);
+}
+
+export async function deleteConversation(conversationId: string): Promise<void> {
   const initData = getInitData();
-  const res = await fetch(`${API_BASE}/chats/${chatId}`, {
+  const res = await fetch(`${API_BASE}/conversations/${conversationId}`, {
     method: "DELETE",
     headers: { Authorization: `tma ${initData}` },
   });
@@ -128,15 +136,58 @@ export async function deleteChat(chatId: string): Promise<void> {
   }
 }
 
+export async function renameConversation(
+  conversationId: string,
+  title: string,
+): Promise<ConversationDetailResponse> {
+  const raw = await apiFetch<ConversationDetailResponse | { data: ConversationDetailResponse }>(`/conversations/${conversationId}/rename`, {
+    method: "PATCH",
+    body: JSON.stringify({ title }),
+  });
+  return "data" in raw && raw.data && typeof raw.data === "object" && "id" in raw.data
+    ? raw.data
+    : raw as ConversationDetailResponse;
+}
+
+export async function pinConversation(
+  conversationId: string,
+): Promise<{ is_pinned: boolean }> {
+  const raw = await apiFetch<{ is_pinned: boolean } | { data: { is_pinned: boolean } }>(`/conversations/${conversationId}/pin`, {
+    method: "POST",
+  });
+  return "data" in raw && raw.data && typeof raw.data === "object" && "is_pinned" in raw.data
+    ? raw.data
+    : raw as { is_pinned: boolean };
+}
+
+export async function shareConversation(
+  conversationId: string,
+): Promise<string> {
+  const data = await apiFetch<{ url: string }>(`/conversations/${conversationId}/share`, {
+    method: "POST",
+  });
+  return data.url;
+}
+
+export async function fetchSharedConversation(
+  conversationId: string,
+  signature: string,
+): Promise<Conversation> {
+  const data = await apiFetch<ConversationDetailResponse>(
+    `/conversations/${conversationId}/shared?signature=${encodeURIComponent(signature)}`,
+  );
+  return mapConversationDetail(data);
+}
+
 export async function sendMessageStream(
-  chatId: string,
+  conversationId: string,
   content: string,
   onChunk: (accumulated: string) => void,
   signal?: AbortSignal,
 ): Promise<ConversationMessage> {
   const initData = getInitData();
 
-  const res = await fetch(`${API_BASE}/chats/${chatId}/messages`, {
+  const res = await fetch(`${API_BASE}/conversations/${conversationId}/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -215,15 +266,16 @@ export async function submitVideo(url: string): Promise<Conversation> {
   const timeout = setTimeout(() => controller.abort(), 240_000);
 
   try {
-    const data = await apiFetch<ConversationDetailResponse>("/chats", {
+    const data = await apiFetch<ConversationDetailResponse>("/conversations", {
       method: "POST",
       body: JSON.stringify({ youtube_url: url }),
       signal: controller.signal,
     });
     return {
       id: data.id,
+      title: data.title,
       videoUrl: data.youtubeVideo?.url ?? url,
-      videoTitle: data.title,
+      videoTitle: data.youtubeVideo?.title ?? data.title,
       messages: (data.messages ?? []).map((m) => ({
         id: m.id,
         role: m.role,
@@ -233,6 +285,7 @@ export async function submitVideo(url: string): Promise<Conversation> {
       isProcessing: data.status === "processing",
       isReady: data.status === "ready",
       createdAt: new Date(data.created_at).getTime(),
+      isPinned: data.is_pinned ?? false,
     };
   } finally {
     clearTimeout(timeout);

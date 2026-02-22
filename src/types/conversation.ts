@@ -8,15 +8,18 @@ export interface ConversationMessage {
 
 export interface Conversation {
   id: string;
+  title: string;
   videoUrl: string;
   videoTitle: string;
   messages: ConversationMessage[];
   isProcessing: boolean;
   isReady: boolean;
   createdAt: number;
+  isPinned?: boolean;
 }
 
 export interface ConversationSummary {
   id: string;
   title: string;
+  isPinned?: boolean;
 }

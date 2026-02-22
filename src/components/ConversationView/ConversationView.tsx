@@ -8,6 +8,30 @@ import {
 import { useChat } from "@/store/ConversationContext.tsx";
 import type { ConversationMessage } from "@/types/conversation.ts";
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  return (
+    <button
+      className="mt-1 self-start bg-transparent border-none cursor-pointer text-tg-hint text-xs p-0.5 rounded hover:text-tg-text transition-colors"
+      onClick={() => void handleCopy()}
+      title="Copy to clipboard"
+    >
+      {copied ? "✓ Copied" : "📋"}
+    </button>
+  );
+}
+
 function MessageBubble({ message }: { message: ConversationMessage }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -17,6 +41,8 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
 
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
+
+  const isAssistant = message.role === "assistant";
 
   return (
     <div
@@ -30,20 +56,25 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
           isUser ? "bg-tg-button" : "bg-white/20"
         }`}
       >
-        {isUser ? "👤" : message.role === "assistant" ? "🤖" : "ℹ️"}
+        {isUser ? "👤" : isAssistant ? "🤖" : "ℹ️"}
       </div>
-      <div
-        className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
-          isUser
-            ? "bg-tg-button text-tg-button-text rounded-br-sm"
-            : isSystem
-              ? "bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5"
-              : "bg-tg-secondary-bg text-tg-text rounded-bl-sm"
-        }`}
-      >
-        {message.content}
-        {message.isStreaming && (
-          <span className="inline-block w-1.5 h-4 bg-tg-text ml-0.5 align-text-bottom animate-[blink_0.8s_infinite]" />
+      <div className="flex flex-col">
+        <div
+          className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+            isUser
+              ? "bg-tg-button text-tg-button-text rounded-br-sm"
+              : isSystem
+                ? "bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5"
+                : "bg-tg-secondary-bg text-tg-text rounded-bl-sm"
+          }`}
+        >
+          {message.content}
+          {message.isStreaming && (
+            <span className="inline-block w-1.5 h-4 bg-tg-text ml-0.5 align-text-bottom animate-[blink_0.8s_infinite]" />
+          )}
+        </div>
+        {isAssistant && !message.isStreaming && (
+          <CopyButton text={message.content} />
         )}
       </div>
     </div>
@@ -73,7 +104,8 @@ export function ConversationView() {
     try {
       await sendMessage(msg);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      console.error("Failed to send message:", err);
+      setError("Something went wrong. Please try again later.");
     } finally {
       setIsSending(false);
       textareaRef.current?.focus();

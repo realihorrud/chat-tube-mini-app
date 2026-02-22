@@ -25,6 +25,9 @@ interface ConversationContextType {
   setActiveConversation: (conversation: Conversation) => void;
   selectConversation: (conversationId: string) => void;
   deleteConversation: (conversationId: string) => void;
+  renameConversation: (conversationId: string, title: string) => Promise<void>;
+  pinConversation: (conversationId: string) => Promise<void>;
+  shareConversation: (conversationId: string) => Promise<string>;
   clearActiveChat: () => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -40,7 +43,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    api.fetchChats().then(setConversationSummaries).catch(console.error);
+    api.fetchConversations().then(setConversationSummaries).catch(console.error);
   }, []);
 
   const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
@@ -55,22 +58,14 @@ export function ChatProvider({ children }: PropsWithChildren) {
   const createConversation = useCallback(
     async (videoUrl: string) => {
       const conversation = await api.submitVideo(videoUrl);
-      const readyMsg: ConversationMessage = {
-        id: `msg_ready_${conversation.id}`,
-        role: "assistant",
-        content:
-          "Your video has been processed successfully! Ask me anything about it.",
-        timestamp: Date.now(),
-      };
-      const conversationWithMsg = { ...conversation, messages: [...conversation.messages, readyMsg] };
-      setConversations((prev) => [conversationWithMsg, ...prev]);
+      setConversations((prev) => [conversation, ...prev]);
       setConversationSummaries((prev) => [
-        { id: conversation.id, title: conversation.videoTitle },
+        { id: conversation.id, title: conversation.title },
         ...prev,
       ]);
       setActiveConversationId(conversation.id);
       setSidebarOpen(false);
-      navigate(`/chat/${conversation.id}`);
+      navigate(`/c/${conversation.id}`);
     },
     [navigate],
   );
@@ -138,7 +133,7 @@ export function ChatProvider({ children }: PropsWithChildren) {
   const selectConversation = useCallback(
     (conversationId: string) => {
       setSidebarOpen(false);
-      navigate(`/chat/${conversationId}`);
+      navigate(`/c/${conversationId}`);
     },
     [navigate],
   );
@@ -154,9 +149,39 @@ export function ChatProvider({ children }: PropsWithChildren) {
         }
         return prev;
       });
-      api.deleteChat(conversationId).catch(console.error);
+      api.deleteConversation(conversationId).catch(console.error);
     },
     [navigate],
+  );
+
+  const renameConversation = useCallback(
+    async (conversationId: string, title: string) => {
+      await api.renameConversation(conversationId, title);
+      setConversationSummaries((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, title } : c)),
+      );
+      updateConversation(conversationId, (c) => ({ ...c, title }));
+    },
+    [updateConversation],
+  );
+
+  const pinConversation = useCallback(
+    async (conversationId: string) => {
+      const data = await api.pinConversation(conversationId);
+      const isPinned = data.is_pinned;
+      setConversationSummaries((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, isPinned } : c)),
+      );
+      updateConversation(conversationId, (c) => ({ ...c, isPinned }));
+    },
+    [updateConversation],
+  );
+
+  const shareConversation = useCallback(
+    async (conversationId: string) => {
+      return api.shareConversation(conversationId);
+    },
+    [],
   );
 
   const clearActiveChat = useCallback(() => {
@@ -181,6 +206,9 @@ export function ChatProvider({ children }: PropsWithChildren) {
         setActiveConversation,
         selectConversation,
         deleteConversation,
+        renameConversation,
+        pinConversation,
+        shareConversation,
         clearActiveChat,
         toggleSidebar,
         setSidebarOpen,

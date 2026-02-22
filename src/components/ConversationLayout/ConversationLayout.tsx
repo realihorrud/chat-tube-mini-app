@@ -17,7 +17,7 @@ export function ConversationLayout({ children }: PropsWithChildren) {
             ☰
           </button>
           <div className="flex-1 text-base font-semibold text-tg-text truncate">
-            {activeConversation ? activeConversation.videoTitle : "ChatTube"}
+            {activeConversation ? activeConversation.title : "ChatTube"}
           </div>
         </div>
         <div className="flex-1 overflow-hidden">{children}</div>
