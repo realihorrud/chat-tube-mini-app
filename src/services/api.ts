@@ -179,13 +179,17 @@ export async function pinConversation(
 export async function shareConversation(
   conversationId: string,
 ): Promise<string> {
-  const data = await apiFetch<{ url: string }>(
+  const raw = await apiFetch<{ url: string } | { data: { url: string } }>(
     `/conversations/${conversationId}/share`,
     {
       method: "POST",
     },
   );
-  return data.url;
+  const result =
+    "data" in raw && raw.data && typeof raw.data === "object" && "url" in raw.data
+      ? raw.data
+      : (raw as { url: string });
+  return result.url;
 }
 
 export async function fetchSharedConversation(

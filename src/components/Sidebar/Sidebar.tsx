@@ -55,6 +55,8 @@ function ContextMenu({
   const clampedX = Math.min(x, window.innerWidth - menuWidth) + 140;
   const clampedY = Math.min(y, window.innerHeight - menuHeight) + 20;
 
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "error">("idle");
+
   const handlePin = async () => {
     await onPin(conversationId);
     onClose();
@@ -69,11 +71,24 @@ function ContextMenu({
   };
 
   const handleShare = async () => {
-    const url = await onShare(conversationId);
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(url);
+    try {
+      const url = await onShare(conversationId);
+      if (navigator.share) {
+        await navigator.share({ url });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      }
+      setShareStatus("copied");
+      setTimeout(() => onClose(), 1000);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        onClose();
+        return;
+      }
+      console.error("Failed to share:", err);
+      setShareStatus("error");
+      setTimeout(() => setShareStatus("idle"), 2000);
     }
-    onClose();
   };
 
   return createPortal(
@@ -126,7 +141,7 @@ function ContextMenu({
             className="min-w-max w-full text-left px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors text-tg-text hover:bg-white/10"
             onClick={() => void handleShare()}
           >
-            🔗 Share
+            🔗 {shareStatus === "copied" ? "Shared!" : shareStatus === "error" ? "Failed" : "Share"}
           </button>
           {confirmDelete ? (
             <div className="flex items-center border-t border-white/10 mt-1 pt-1">
