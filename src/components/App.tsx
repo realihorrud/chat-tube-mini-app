@@ -30,7 +30,10 @@ export function App() {
             <Routes>
               <Route path="/" element={<WelcomeScreen />} />
               <Route path="/c/:id" element={<ConversationPage />} />
-              <Route path="/c/:id/shared" element={<SharedConversationPage />} />
+              <Route
+                path="/c/:id/shared"
+                element={<SharedConversationPage />}
+              />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </ConversationLayout>

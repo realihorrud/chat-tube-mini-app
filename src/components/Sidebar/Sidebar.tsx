@@ -14,7 +14,17 @@ interface ContextMenuProps {
   onShare: (conversationId: string) => Promise<string>;
 }
 
-function ContextMenu({ conversationId, conversationTitle, x, y, onClose, onDelete, onRename, onPin, onShare }: ContextMenuProps) {
+function ContextMenu({
+  conversationId,
+  conversationTitle,
+  x,
+  y,
+  onClose,
+  onDelete,
+  onRename,
+  onPin,
+  onShare,
+}: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -78,7 +88,9 @@ function ContextMenu({ conversationId, conversationTitle, x, y, onClose, onDelet
             className="px-2.5 py-1.5 rounded-lg border border-white/20 bg-tg-bg text-tg-text text-[13px] outline-none w-[180px]"
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") void handleRenameSubmit(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleRenameSubmit();
+            }}
             autoFocus
           />
           <div className="flex gap-1.5">
@@ -102,19 +114,19 @@ function ContextMenu({ conversationId, conversationTitle, x, y, onClose, onDelet
             className="min-w-max w-full text-left px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors text-tg-text hover:bg-white/10"
             onClick={() => void handlePin()}
           >
-            📌  Pin
+            📌 Pin
           </button>
           <button
             className="min-w-max w-full text-left px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors text-tg-text hover:bg-white/10"
             onClick={() => setRenaming(true)}
           >
-            ✏️  Rename
+            ✏️ Rename
           </button>
           <button
             className="min-w-max w-full text-left px-3.5 py-2 text-[13px] bg-transparent border-none cursor-pointer transition-colors text-tg-text hover:bg-white/10"
             onClick={() => void handleShare()}
           >
-            🔗  Share
+            🔗 Share
           </button>
           {confirmDelete ? (
             <div className="flex items-center border-t border-white/10 mt-1 pt-1">
@@ -215,38 +227,43 @@ export function Sidebar() {
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {[...conversationSummaries]
-            .sort((a, b) => Number(b.isPinned ?? false) - Number(a.isPinned ?? false))
+            .sort(
+              (a, b) =>
+                Number(b.isPinned ?? false) - Number(a.isPinned ?? false),
+            )
             .map((conversation) => (
-            <div
-              key={conversation.id}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-colors mb-0.5 ${
-                conversation.id === activeConversationId
-                  ? "bg-white/[0.18]"
-                  : "hover:bg-white/10"
-              } group`}
-              onClick={() => selectConversation(conversation.id)}
-              onContextMenu={(e) => handleContextMenu(e, conversation.id, conversation.title)}
-            >
-              {conversation.isPinned && (
-                <span className="text-xs shrink-0">📌</span>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="text-sm text-tg-text truncate">
-                  {conversation.title}
-                </div>
-              </div>
-              <button
-                data-menu-trigger
-                className="bg-transparent border-none text-tg-hint text-base cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleContextMenu(e, conversation.id, conversation.title);
-                }}
+              <div
+                key={conversation.id}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg cursor-pointer transition-colors mb-0.5 ${
+                  conversation.id === activeConversationId
+                    ? "bg-white/[0.18]"
+                    : "hover:bg-white/10"
+                } group`}
+                onClick={() => selectConversation(conversation.id)}
+                onContextMenu={(e) =>
+                  handleContextMenu(e, conversation.id, conversation.title)
+                }
               >
-                ⋮
-              </button>
-            </div>
-          ))}
+                {conversation.isPinned && (
+                  <span className="text-xs shrink-0">📌</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-tg-text truncate">
+                    {conversation.title}
+                  </div>
+                </div>
+                <button
+                  data-menu-trigger
+                  className="bg-transparent border-none text-tg-hint text-base cursor-pointer p-1 rounded hover:bg-white/10 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleContextMenu(e, conversation.id, conversation.title);
+                  }}
+                >
+                  ⋮
+                </button>
+              </div>
+            ))}
         </div>
       </aside>
       {menu && (

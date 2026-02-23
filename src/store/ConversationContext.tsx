@@ -38,19 +38,32 @@ const ConversationContext = createContext<ConversationContextType | null>(null);
 export function ChatProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [conversationSummaries, setConversationSummaries] = useState<ConversationSummary[]>([]);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversationSummaries, setConversationSummaries] = useState<
+    ConversationSummary[]
+  >([]);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    api.fetchConversations().then(setConversationSummaries).catch(console.error);
+    api
+      .fetchConversations()
+      .then(setConversationSummaries)
+      .catch(console.error);
   }, []);
 
-  const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
+  const activeConversation =
+    conversations.find((c) => c.id === activeConversationId) ?? null;
 
   const updateConversation = useCallback(
-    (conversationId: string, updater: (conversation: Conversation) => Conversation) => {
-      setConversations((prev) => prev.map((c) => (c.id === conversationId ? updater(c) : c)));
+    (
+      conversationId: string,
+      updater: (conversation: Conversation) => Conversation,
+    ) => {
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversationId ? updater(c) : c)),
+      );
     },
     [],
   );
@@ -141,7 +154,9 @@ export function ChatProvider({ children }: PropsWithChildren) {
   const deleteConversation = useCallback(
     (conversationId: string) => {
       setConversations((prev) => prev.filter((c) => c.id !== conversationId));
-      setConversationSummaries((prev) => prev.filter((c) => c.id !== conversationId));
+      setConversationSummaries((prev) =>
+        prev.filter((c) => c.id !== conversationId),
+      );
       setActiveConversationId((prev) => {
         if (prev === conversationId) {
           navigate("/");
@@ -177,12 +192,9 @@ export function ChatProvider({ children }: PropsWithChildren) {
     [updateConversation],
   );
 
-  const shareConversation = useCallback(
-    async (conversationId: string) => {
-      return api.shareConversation(conversationId);
-    },
-    [],
-  );
+  const shareConversation = useCallback(async (conversationId: string) => {
+    return api.shareConversation(conversationId);
+  }, []);
 
   const clearActiveChat = useCallback(() => {
     setActiveConversationId(null);

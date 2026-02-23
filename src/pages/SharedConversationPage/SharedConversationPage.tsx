@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import type { Conversation, ConversationMessage } from "@/types/conversation.ts";
+import type {
+  Conversation,
+  ConversationMessage,
+} from "@/types/conversation.ts";
 import * as api from "@/services/api";
 
 function SharedMessageBubble({ message }: { message: ConversationMessage }) {

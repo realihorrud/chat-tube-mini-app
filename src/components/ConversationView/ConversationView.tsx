@@ -5,6 +5,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useChat } from "@/store/ConversationContext.tsx";
 import type { ConversationMessage } from "@/types/conversation.ts";
 
@@ -60,15 +62,48 @@ function MessageBubble({ message }: { message: ConversationMessage }) {
       </div>
       <div className="flex flex-col">
         <div
-          className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+          className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
             isUser
-              ? "bg-tg-button text-tg-button-text rounded-br-sm"
+              ? "bg-tg-button text-tg-button-text rounded-br-sm whitespace-pre-wrap"
               : isSystem
-                ? "bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5"
+                ? "bg-transparent text-tg-hint italic text-[13px] px-3.5 py-1.5 whitespace-pre-wrap"
                 : "bg-tg-secondary-bg text-tg-text rounded-bl-sm"
           }`}
         >
-          {message.content}
+          {isAssistant ? (
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ children }) => <p className="my-1 first:mt-0 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="my-1 pl-5 list-disc">{children}</ul>,
+                ol: ({ children }) => <ol className="my-1 pl-5 list-decimal">{children}</ol>,
+                li: ({ children }) => <li className="my-0.5">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                code: ({ children, className }) => {
+                  const isBlock = className?.includes("language-");
+                  return isBlock ? (
+                    <code className="block my-2 p-2.5 rounded-lg bg-black/20 text-[13px] overflow-x-auto whitespace-pre">{children}</code>
+                  ) : (
+                    <code className="px-1 py-0.5 rounded bg-black/20 text-[13px]">{children}</code>
+                  );
+                },
+                pre: ({ children }) => <pre className="my-2 overflow-x-auto">{children}</pre>,
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-tg-link underline">{children}</a>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className="my-1 pl-3 border-l-2 border-white/30 text-tg-hint">{children}</blockquote>
+                ),
+                h1: ({ children }) => <h1 className="text-base font-bold my-2 first:mt-0">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-[15px] font-bold my-1.5 first:mt-0">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-bold my-1 first:mt-0">{children}</h3>,
+              }}
+            >
+              {message.content}
+            </Markdown>
+          ) : (
+            message.content
+          )}
           {message.isStreaming && (
             <span className="inline-block w-1.5 h-4 bg-tg-text ml-0.5 align-text-bottom animate-[blink_0.8s_infinite]" />
           )}

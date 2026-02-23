@@ -120,12 +120,18 @@ function mapConversationDetail(data: ConversationDetailResponse): Conversation {
   };
 }
 
-export async function fetchConversation(conversationId: string): Promise<Conversation> {
-  const data = await apiFetch<ConversationDetailResponse>(`/conversations/${conversationId}`);
+export async function fetchConversation(
+  conversationId: string,
+): Promise<Conversation> {
+  const data = await apiFetch<ConversationDetailResponse>(
+    `/conversations/${conversationId}`,
+  );
   return mapConversationDetail(data);
 }
 
-export async function deleteConversation(conversationId: string): Promise<void> {
+export async function deleteConversation(
+  conversationId: string,
+): Promise<void> {
   const initData = getInitData();
   const res = await fetch(`${API_BASE}/conversations/${conversationId}`, {
     method: "DELETE",
@@ -140,32 +146,45 @@ export async function renameConversation(
   conversationId: string,
   title: string,
 ): Promise<ConversationDetailResponse> {
-  const raw = await apiFetch<ConversationDetailResponse | { data: ConversationDetailResponse }>(`/conversations/${conversationId}/rename`, {
+  const raw = await apiFetch<
+    ConversationDetailResponse | { data: ConversationDetailResponse }
+  >(`/conversations/${conversationId}/rename`, {
     method: "PATCH",
     body: JSON.stringify({ title }),
   });
-  return "data" in raw && raw.data && typeof raw.data === "object" && "id" in raw.data
+  return "data" in raw &&
+    raw.data &&
+    typeof raw.data === "object" &&
+    "id" in raw.data
     ? raw.data
-    : raw as ConversationDetailResponse;
+    : (raw as ConversationDetailResponse);
 }
 
 export async function pinConversation(
   conversationId: string,
 ): Promise<{ is_pinned: boolean }> {
-  const raw = await apiFetch<{ is_pinned: boolean } | { data: { is_pinned: boolean } }>(`/conversations/${conversationId}/pin`, {
+  const raw = await apiFetch<
+    { is_pinned: boolean } | { data: { is_pinned: boolean } }
+  >(`/conversations/${conversationId}/pin`, {
     method: "POST",
   });
-  return "data" in raw && raw.data && typeof raw.data === "object" && "is_pinned" in raw.data
+  return "data" in raw &&
+    raw.data &&
+    typeof raw.data === "object" &&
+    "is_pinned" in raw.data
     ? raw.data
-    : raw as { is_pinned: boolean };
+    : (raw as { is_pinned: boolean });
 }
 
 export async function shareConversation(
   conversationId: string,
 ): Promise<string> {
-  const data = await apiFetch<{ url: string }>(`/conversations/${conversationId}/share`, {
-    method: "POST",
-  });
+  const data = await apiFetch<{ url: string }>(
+    `/conversations/${conversationId}/share`,
+    {
+      method: "POST",
+    },
+  );
   return data.url;
 }
 
@@ -187,16 +206,19 @@ export async function sendMessageStream(
 ): Promise<ConversationMessage> {
   const initData = getInitData();
 
-  const res = await fetch(`${API_BASE}/conversations/${conversationId}/messages`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "text/event-stream",
-      Authorization: `tma ${initData}`,
+  const res = await fetch(
+    `${API_BASE}/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        Authorization: `tma ${initData}`,
+      },
+      body: JSON.stringify({ content }),
+      signal,
     },
-    body: JSON.stringify({ content }),
-    signal,
-  });
+  );
 
   if (!res.ok) {
     const text = await res.text();
