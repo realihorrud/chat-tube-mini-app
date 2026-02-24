@@ -5,7 +5,7 @@ import type {
 } from "@/types/conversation.ts";
 import { retrieveRawInitData } from "@tma.js/sdk";
 
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 function getInitData(): string {
   try {
