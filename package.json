@@ -1,9 +1,9 @@
 {
-  "name": "reactjs-template",
+  "name": "chat-tube-mini-app",
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "homepage": "https://telegram-mini-apps.github.io/reactjs-template",
+  "homepage": "https://realihorrud.github.io/chat-tube-mini-app",
   "scripts": {
     "deploy": "gh-pages -d dist",
     "dev": "vite",
