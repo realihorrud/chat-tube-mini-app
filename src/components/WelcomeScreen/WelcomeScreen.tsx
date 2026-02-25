@@ -46,9 +46,8 @@ export function WelcomeScreen() {
     try {
       await createConversation(videoUrl.trim());
       setUrl("");
-    } catch (err) {
-      console.error("Failed to create conversation:", err);
-      setError("Something went wrong. Please try again later.");
+    } catch (err: Error | unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }

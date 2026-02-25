@@ -56,9 +56,8 @@ export function SharedConversationPage() {
     api
       .fetchSharedConversation(id, signature)
       .then(setConversation)
-      .catch((err) => {
-        console.error("Failed to load shared conversation:", err);
-        setError("Something went wrong. Please try again later.");
+      .catch((err: Error | unknown) => {
+        setError(err instanceof Error ? err.message : "Something went wrong.");
       })
       .finally(() => setLoading(false));
   }, [id, signature]);

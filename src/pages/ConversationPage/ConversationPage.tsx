@@ -19,9 +19,8 @@ export function ConversationPage() {
     api
       .fetchConversation(id)
       .then(setActiveConversation)
-      .catch((err) => {
-        console.error("Failed to load conversation:", err);
-        setError("Something went wrong. Please try again later.");
+      .catch((err: Error | unknown) => {
+        setError(err instanceof Error ? err.message : "Something went wrong.");
       })
       .finally(() => setLoading(false));
   }, [id, activeConversation?.id, setActiveConversation]);
