@@ -21,7 +21,7 @@ export function DebugError({ error }: { error: unknown }) {
           </button>
           {expanded && (
             <pre className="mt-1.5 p-2 rounded-lg bg-black/30 text-[11px] text-tg-text overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
-{`${debug.method} ${debug.url}
+{`${debug.method} ${new URL(debug.url, window.location.origin).href}
 
 Request Headers:
 ${Object.entries(debug.headers).map(([k, v]) => `  ${k}: ${k === "Authorization" ? v.slice(0, 20) + "..." : v}`).join("\n")}
