@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useChat } from "@/store/ConversationContext.tsx";
+import { DebugError } from "@/components/DebugError/DebugError.tsx";
 
 const EXAMPLES = [
   {
@@ -37,7 +38,7 @@ export function WelcomeScreen() {
   const { createConversation } = useChat();
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   const handleSubmit = async (videoUrl: string) => {
     if (!videoUrl.trim() || isLoading) return;
@@ -46,8 +47,9 @@ export function WelcomeScreen() {
     try {
       await createConversation(videoUrl.trim());
       setUrl("");
-    } catch (err: Error | unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } catch (err) {
+      console.error("Failed to create conversation:", err);
+      setError(err);
     } finally {
       setIsLoading(false);
     }
@@ -85,8 +87,10 @@ export function WelcomeScreen() {
         </button>
       </form>
 
-      {error && (
-        <p className="mt-2 text-xs text-[#ff4444] max-w-[480px]">{error}</p>
+      {error !== null && (
+        <div className="mt-2 max-w-[480px]">
+          <DebugError error={error} />
+        </div>
       )}
 
       <p className="mt-4 text-xs text-tg-hint">

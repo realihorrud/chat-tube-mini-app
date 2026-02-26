@@ -4,6 +4,7 @@ import type {
   Conversation,
   ConversationMessage,
 } from "@/types/conversation.ts";
+import { DebugError } from "@/components/DebugError/DebugError.tsx";
 import * as api from "@/services/api";
 
 function SharedMessageBubble({ message }: { message: ConversationMessage }) {
@@ -44,11 +45,11 @@ export function SharedConversationPage() {
   const signature = searchParams.get("signature") ?? "";
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     if (!id || !signature) {
-      setError("Invalid share link");
+      setError(new Error("Invalid share link"));
       setLoading(false);
       return;
     }
@@ -56,8 +57,9 @@ export function SharedConversationPage() {
     api
       .fetchSharedConversation(id, signature)
       .then(setConversation)
-      .catch((err: Error | unknown) => {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
+      .catch((err) => {
+        console.error("Failed to load shared conversation:", err);
+        setError(err);
       })
       .finally(() => setLoading(false));
   }, [id, signature]);
@@ -72,8 +74,8 @@ export function SharedConversationPage() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full text-[#ff4444] text-sm">
-        {error}
+      <div className="flex items-center justify-center h-full p-4">
+        <DebugError error={error} />
       </div>
     );
   }

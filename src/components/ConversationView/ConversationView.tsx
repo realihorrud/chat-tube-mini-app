@@ -9,6 +9,7 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChat } from "@/store/ConversationContext.tsx";
 import type { ConversationMessage } from "@/types/conversation.ts";
+import { DebugError } from "@/components/DebugError/DebugError.tsx";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -120,7 +121,7 @@ export function ConversationView() {
   const { activeConversation, sendMessage } = useChat();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   if (!activeConversation) return null;
@@ -138,8 +139,9 @@ export function ConversationView() {
     setError(null);
     try {
       await sendMessage(msg);
-    } catch (err: Error | unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      setError(err);
     } finally {
       setIsSending(false);
       textareaRef.current?.focus();
@@ -181,9 +183,9 @@ export function ConversationView() {
       </div>
 
       {/* Input */}
-      {error && (
-        <div className="px-4 py-2 text-xs text-[#ff4444] text-center">
-          {error}
+      {error !== null && (
+        <div className="px-4 py-2">
+          <DebugError error={error} />
         </div>
       )}
       <form

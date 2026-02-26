@@ -19,6 +19,13 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public debugInfo?: {
+      url: string;
+      method: string;
+      headers: Record<string, string>;
+      body?: string;
+      responseBody: string;
+    },
   ) {
     super(message);
     this.name = "ApiError";
@@ -49,7 +56,8 @@ async function apiFetch<T>(
     body = JSON.stringify({ ...parsed });
   }
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const url = `${API_BASE}${path}`;
+  const res = await fetch(url, {
     ...options,
     headers,
     body,
@@ -64,7 +72,13 @@ async function apiFetch<T>(
     } catch {
       message = text;
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, {
+      url,
+      method,
+      headers,
+      body,
+      responseBody: text,
+    });
   }
 
   return res.json() as Promise<T>;
@@ -133,12 +147,20 @@ export async function deleteConversation(
   conversationId: string,
 ): Promise<void> {
   const initData = getInitData();
-  const res = await fetch(`${API_BASE}/conversations/${conversationId}`, {
+  const url = `${API_BASE}/conversations/${conversationId}`;
+  const headers: Record<string, string> = { Authorization: `tma ${initData}` };
+  const res = await fetch(url, {
     method: "DELETE",
-    headers: { Authorization: `tma ${initData}` },
+    headers,
   });
   if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    const text = await res.text();
+    throw new ApiError(res.status, text, {
+      url,
+      method: "DELETE",
+      headers,
+      responseBody: text,
+    });
   }
 }
 
@@ -210,19 +232,20 @@ export async function sendMessageStream(
 ): Promise<ConversationMessage> {
   const initData = getInitData();
 
-  const res = await fetch(
-    `${API_BASE}/conversations/${conversationId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "text/event-stream",
-        Authorization: `tma ${initData}`,
-      },
-      body: JSON.stringify({ content }),
-      signal,
-    },
-  );
+  const url = `${API_BASE}/conversations/${conversationId}/messages`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "text/event-stream",
+    Authorization: `tma ${initData}`,
+  };
+  const body = JSON.stringify({ content });
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body,
+    signal,
+  });
 
   if (!res.ok) {
     const text = await res.text();
@@ -233,7 +256,13 @@ export async function sendMessageStream(
     } catch {
       message = text;
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, {
+      url,
+      method: "POST",
+      headers,
+      body,
+      responseBody: text,
+    });
   }
 
   const reader = res.body!.getReader();
